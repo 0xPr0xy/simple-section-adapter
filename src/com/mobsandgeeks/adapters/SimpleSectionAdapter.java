@@ -17,10 +17,15 @@
 package com.mobsandgeeks.adapters;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SectionIndexer;
@@ -53,6 +58,7 @@ public class SimpleSectionAdapter<T> extends BaseAdapter implements SectionIndex
     private BaseAdapter mListAdapter;
     private int mSectionHeaderLayoutId;
     private int mSectionTitleTextViewId;
+    private LinearLayout mSectionedListSidebar;
     private Sectionizer<T> mSectionizer;
     private LinkedHashMap<String, Integer> mSections;
 
@@ -66,7 +72,7 @@ public class SimpleSectionAdapter<T> extends BaseAdapter implements SectionIndex
      * @param sectionizer Sectionizer for sectioning the {@link ListView}.
      */
     public SimpleSectionAdapter(Context context, BaseAdapter listAdapter, 
-            int sectionHeaderLayoutId, int sectionTitleTextViewId, 
+            int sectionHeaderLayoutId, int sectionTitleTextViewId, LinearLayout sectionedListSidebar,
             Sectionizer<T> sectionizer) {
         if(context == null) {
             throw new IllegalArgumentException("context cannot be null.");
@@ -87,6 +93,47 @@ public class SimpleSectionAdapter<T> extends BaseAdapter implements SectionIndex
 
         // Find sections
         findSections();
+
+        if(sectionedListSidebar != null){
+            mSectionedListSidebar = sectionedListSidebar;
+            addAlphabetScroller();
+        }
+    }
+
+    private void addAlphabetScroller()
+    {
+        ViewGroup.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        for(String section : this.getSiderbarSectionLetters()){
+            TextView v = new TextView(mContext);
+            v.setTextColor(Color.BLACK);
+            v.setText(section);
+            v.setTag(section);
+            v.setGravity(Gravity.CENTER);
+            mSectionedListSidebar.addView(v, lp);
+        }
+
+        mSectionedListSidebar.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event.getActionMasked() == MotionEvent.ACTION_UP){
+                    LinearLayout layout = (LinearLayout)v;
+                    for(int i =0; i< layout.getChildCount(); i++)
+                    {
+                        View view = layout.getChildAt(i);
+                        if(view != null){
+                            Rect outRect = new Rect(view.getLeft(), view.getTop(), view.getRight(), view.getBottom());
+                            if(outRect.contains((int)event.getX(), (int)event.getY()))
+                            {
+                                int position = getPositionForSectionName((String)view.getTag());
+                                mSectionizer.smoothScrollToPosition(position);
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+        });
     }
 
     private boolean isTextView(Context context, int layoutId, int textViewId) {
@@ -195,6 +242,16 @@ public class SimpleSectionAdapter<T> extends BaseAdapter implements SectionIndex
         return position - nSections;
     }
 
+    public String[] getSiderbarSectionLetters() {
+
+        List<String> list = new ArrayList<String>();
+        for(Entry<String, Integer> entry : mSections.entrySet()) {
+            list.add(entry.getKey().substring(0,1));
+        }
+        String[] strArray = list.toArray(new String[0]);
+        return list.toArray(strArray);
+    }
+
     @Override
     public String[] getSections() {
 
@@ -228,6 +285,15 @@ public class SimpleSectionAdapter<T> extends BaseAdapter implements SectionIndex
             i++;
         }
         return position;
+    }
+
+    private int getPositionForSectionName(String name){
+        for(Entry<String, Integer> entry : mSections.entrySet()) {
+            if(entry.getKey().substring(0,1).equals(name)){
+                return entry.getValue();
+            }
+        }
+        return 0;
     }
 
     static class SectionHolder {
