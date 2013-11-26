@@ -28,11 +28,23 @@ class BookSectionizer implements Sectionizer<Book> {
     public String getSectionTitleForItem(Book book) {
         return book.getGenre();
     }
+
+    @Override
+    public void smoothScrollToPosition(int position) {
+
+        //implement this if you want to use the Sidebar with section letters (Optional)
+        listView.smoothScrollToPosition(position);
+    }
 }
 
-// 2. Wrap your existing adapter with the SimpleSectionAdapter
+// 2a. Wrap your existing adapter with the SimpleSectionAdapter
 SimpleSectionAdapter<Book> sectionAdapter = new SimpleSectionAdapter<Book>(context, 
-        yourBookAdapter, R.layout.section_header, R.id.title, 
+        yourBookAdapter, R.layout.section_header, R.id.title, null,
+        new BookSectionizer());
+
+// 2b. (Optional) If you want to use the Sidebar with section letters
+SimpleSectionAdapter<Book> sectionAdapter = new SimpleSectionAdapter<Book>(context, 
+        yourBookAdapter, R.layout.section_header, R.id.title, alphabetLinearLayout,
         new BookSectionizer());
     
 // 3. Set the SimpleSectionAdapter to your ListView
