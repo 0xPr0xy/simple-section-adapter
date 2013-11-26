@@ -23,9 +23,12 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.SectionIndexer;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -37,7 +40,7 @@ import java.util.Set;
  * @author Ragunath Jawahar R <rj@mobsandgeeks.com>
  * @version 0.2
  */
-public class SimpleSectionAdapter<T> extends BaseAdapter {
+public class SimpleSectionAdapter<T> extends BaseAdapter implements SectionIndexer {
     // Debug
     static final boolean DEBUG = false;
     static final String TAG = SimpleSectionAdapter.class.getSimpleName();
@@ -190,6 +193,41 @@ public class SimpleSectionAdapter<T> extends BaseAdapter {
         }
 
         return position - nSections;
+    }
+
+    @Override
+    public String[] getSections() {
+
+        List<String> list = new ArrayList<String>();
+        for(Entry<String, Integer> entry : mSections.entrySet()) {
+            list.add(entry.getKey());
+        }
+        String[] strArray = list.toArray(new String[0]);
+        return list.toArray(strArray);
+    }
+
+    @Override
+    public int getPositionForSection(int section) {
+        int i = 0;
+        for(Entry<String, Integer> entry : mSections.entrySet()) {
+            if(i == section) {
+                return entry.getValue();
+            }
+            i++;
+        }
+        return section;
+    }
+
+    @Override
+    public int getSectionForPosition(int position) {
+        int i = 0;
+        for(Entry<String, Integer> entry : mSections.entrySet()) {
+            if(entry.getValue() == position) {
+                return i;
+            }
+            i++;
+        }
+        return position;
     }
 
     static class SectionHolder {
